@@ -4,12 +4,9 @@ import java.net.MalformedURLException;
 
 public class httpc{
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws MalformedURLException {
 
         HTTPRequest httpRequest = new HTTPRequest(args);
-        httpRequest.HandlingRequest();
-
-}
 
         try {
             httpRequest.HandlingRequest();

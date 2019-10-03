@@ -68,10 +68,6 @@ public class HTTPRequest {
             POSTRequest(args[args.length-1]);
             //execute command
 
-           //Needs to handle -h, -v and take in String parameter
-            POSTRequest();
-
-
         }
         else if (args[0].equals("get")){
             String inputURL;
@@ -189,15 +185,15 @@ public class HTTPRequest {
         // Send headers
         BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
         wr.write("POST "+ u +" HTTP/1.0\r\n");
-        wr.write(Headers());
+        wr.write(parseForHeaders());
         wr.write("\r\n");
 
         // Send body, write data or file if they are there
-        if (!FileData().equals("")){
-                wr.write(FileData());
+        if (!parseForFileData().equals("")){
+                wr.write(parseForFileData());
         }
-        else if(!Data().equals("")){
-            wr. write(Data());
+        else if(!parseForData().equals("")){
+            wr. write(parseForData());
         }
         wr.flush();
 
