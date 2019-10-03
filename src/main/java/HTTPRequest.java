@@ -4,6 +4,9 @@ import joptsimple.OptionSet;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.MalformedParameterizedTypeException;
+import java.net.*;
 import java.util.List;
 
 public class HTTPRequest {
@@ -14,7 +17,7 @@ public class HTTPRequest {
 
     }
 
-    public void HandlingRequest(){
+    public void HandlingRequest() throws MalformedURLException{
 
         if (args[0].equalsIgnoreCase("help")){
             if (args.length==1){
@@ -52,14 +55,31 @@ public class HTTPRequest {
 
         }
         else if (args[0].equals("post")){
+           //Needs to handle -h, -v and take in String parameter
             POSTRequest();
-            //execute command
 
         }
         else if (args[0].equals("get")){
+            String inputURL;
 
-            //execute command
+            if (parseForVerbose())
+            {
+               // prints the detail of the response such as protocol, status, and headers.
+            }
 
+            /*
+            if (parseForHeaders())
+            {
+                // prints the detail of the response such as protocol, status, and headers.
+            }
+           */
+             inputURL = args[args.length-1];
+
+            if(inputURL.startsWith("https://")|| inputURL.startsWith("http://"))
+            GETRequest(inputURL);
+
+            else
+                throw new MalformedURLException("The Following URL is not valid :" + inputURL);
         }
         else{
             System.err.println("httpc " + args[0] + " is not a valid command.");
@@ -68,7 +88,7 @@ public class HTTPRequest {
     }
     //Parsing
 
-    public String Headers(){
+    public String parseForHeaders(){
         OptionParser parser = new OptionParser();
         parser.accepts("h")
                 .withRequiredArg()
@@ -77,18 +97,18 @@ public class HTTPRequest {
         OptionSet ResultingHeaders = parser.parse(args);
 
         //get a list of all the headers
-        List<String> headerlist = (List<String>)ResultingHeaders.valuesOf("h");
+        List<String> headerList = (List<String>)ResultingHeaders.valuesOf("h");
 
-        // Create a string called Headers and add all the headers from the list
-        String Headers="";
-        for(String header: headerlist){
-            Headers += header.replaceAll(":", ": ") + "\r\n";
+        // Create a string called headers and add all the headers from the list
+        String headers="";
+        for(String header: headerList){
+            headers += header.replaceAll(":", ": ") + "\r\n";
         }
-        return Headers;
+        return headers;
     }
 
 
-    public boolean Verbose() {
+    public boolean parseForVerbose() {
         OptionParser parser = new OptionParser();
         parser.accepts("v");
         parser.allowsUnrecognizedOptions();
@@ -96,7 +116,7 @@ public class HTTPRequest {
         return Verbose.has("v");
     }
 
-    public String Data() {
+    public String parseForData() {
         OptionParser parser = new OptionParser();
         parser.accepts("d")
                 .withRequiredArg()
@@ -106,7 +126,7 @@ public class HTTPRequest {
         return (String)Data.valueOf("d");
     }
 
-    public String FileData() {
+    public String parseForFileData() {
         OptionParser parser = new OptionParser();
         parser.accepts("f")
                 .withRequiredArg()
@@ -127,18 +147,36 @@ public class HTTPRequest {
             }
         }
         catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
         }
         return data;
     }
 
     //Post Request
     private void POSTRequest(){
-
-
-
-
-
+   //Needs to take in String parameter for URL
     }
 
+    //Get Request
+    private void GETRequest(String inputURLString) throws MalformedURLException{
+
+        URL url = new URL(inputURLString);  //throws malformed url
+        String host = url.getHost();
+        int  port = url.getDefaultPort();
+
+        try {
+            Socket socket = new Socket(host, port);
+            socket.close();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
+
+
+
+
