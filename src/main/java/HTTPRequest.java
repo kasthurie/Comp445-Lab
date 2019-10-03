@@ -16,19 +16,38 @@ public class HTTPRequest {
 
     public void HandlingRequest(){
 
-        if (args[0].equals("help")){
+        if (args[0].equalsIgnoreCase("help")){
             if (args.length==1){
-                //print help message
+                System.out.println("httpc help");
+                System.out.println("httpc is a curl-like application but supports HTTP protocol only.");
+                System.out.println("Usage:  httpc command [arguments]");
+                System.out.println("The commands are: ");
+                System.out.println("    get      executes a HTTP GET request and prints the response.");
+                System.out.println("    post     executes a HTTP POST request and prints the response.");
+                System.out.println("    help     prints this screen.");
+                System.out.println(" Use \"httpc help [command]\" for more information about a command.");
             }
-            else if (args[1].equals("get")){
-                //print help get message
+            else if (args[1].equalsIgnoreCase("get")){
+                System.out.println("httpc help get");
+                System.out.println("Usage:   httpc get [-v] [-h key:value] URL");
+                System.out.println("Get executes a HTTP GET request for a given URL.");
+                System.out.println("    -v      prints the detail of the response such as protocol, status, and headers.");
+                System.out.println("    -h key:value       Associates headers to HTTP Request with the format 'key:value'.");
             }
-            else if (args[1].equals("post")){
-                //print help post message
+            else if (args[1].equalsIgnoreCase("post")){
+                System.out.println("httpc help post");
+                System.out.println("Usage:   httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL");
+                System.out.println("Post executes a HTTP POST request for a given URL with inline data or from file.");
+                System.out.println("    -v      prints the detail of the response such as protocol, status, and headers.");
+                System.out.println("    -h key:value       Associates headers to HTTP Request with the format 'key:value'.");
+                System.out.println("    -d string       Associates an inline data to the body HTTP POST request.");
+                System.out.println("    -f file        Associates the content of a file to the body HTTP POST request.");
+                System.out.println("Either [-d] or [-f] can be used but not both.");
             }
 
             else{
-                //print error message
+                System.err.println("httpc help " + args[1] + " is not a valid command.");
+                System.err.println(" Use \"httpc help\" for more information about the list of valid commands.");
             }
 
         }
@@ -43,7 +62,8 @@ public class HTTPRequest {
 
         }
         else{
-            //print error message
+            System.err.println("httpc " + args[0] + " is not a valid command.");
+            System.err.println(" Use \"httpc help\" for more information about the list of valid commands.");
         }
     }
     //Parsing
