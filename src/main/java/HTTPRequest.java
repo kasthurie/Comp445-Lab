@@ -1,10 +1,19 @@
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.List;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLEncoder;
+
+
+
 
 public class HTTPRequest {
     private String[] args;
@@ -52,7 +61,7 @@ public class HTTPRequest {
 
         }
         else if (args[0].equals("post")){
-            POSTRequest();
+            POSTRequest(args[args.length-1]);
             //execute command
 
         }
@@ -66,6 +75,7 @@ public class HTTPRequest {
             System.err.println(" Use \"httpc help\" for more information about the list of valid commands.");
         }
     }
+
     //Parsing
 
     public String Headers(){
@@ -133,12 +143,64 @@ public class HTTPRequest {
     }
 
     //Post Request
-    private void POSTRequest(){
+    private void POSTRequest(String str){
 
 
+    try {
+
+        String host;
+        int port;
 
 
+        String url = str.replaceAll("'", "");
+        URL u = new URL(url);
+        host = u.getHost();
+        port = u.getDefaultPort();
+
+        InetAddress addr = InetAddress.getByName(host);
+        Socket socket = new Socket(addr, port);
+
+        // Send headers
+        BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+        wr.write("POST "+ u +" HTTP/1.0\r\n");
+        wr.write(Headers());
+        wr.write("\r\n");
+
+        // Send body, write data or file if they are there
+        if (!FileData().equals("")){
+                wr.write(FileData());
+        }
+        else if(!Data().equals("")){
+            wr. write(Data());
+        }
+        wr.flush();
+
+        // Get response
+
+        //if(Verbose()){
+            //print normally
+        //}
+        //else{
+        // check for a \n, and at that point print print all the body
+        // }
+
+        BufferedReader rd = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String line;
+
+        while ((line = rd.readLine()) != null) {
+            System.out.println(line);
+                    }
+
+        wr.close();
+        rd.close();
+
+    }
+    catch (Exception e) {
+        e.printStackTrace();
 
     }
 
-}
+            }
+
+    }
+
