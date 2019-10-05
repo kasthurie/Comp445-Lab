@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.MalformedParameterizedTypeException;
 import java.net.*;
 import java.util.List;
 import java.io.BufferedWriter;
@@ -13,7 +12,6 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.net.URLEncoder;
 
 
 
@@ -99,7 +97,7 @@ public class HTTPRequest {
 
     //Parsing
 
-    public String parseForHeaders(){
+    private String parseForHeaders(){
         OptionParser parser = new OptionParser();
         parser.accepts("h")
                 .withRequiredArg()
@@ -119,7 +117,7 @@ public class HTTPRequest {
     }
 
 
-    public boolean parseForVerbose() {
+    private boolean parseForVerbose() {
         OptionParser parser = new OptionParser();
         parser.accepts("v");
         parser.allowsUnrecognizedOptions();
@@ -127,7 +125,7 @@ public class HTTPRequest {
         return Verbose.has("v");
     }
 
-    public String parseForData() {
+    private String parseForData() {
         OptionParser parser = new OptionParser();
         parser.accepts("d")
                 .withRequiredArg()
@@ -137,7 +135,7 @@ public class HTTPRequest {
         return (String)Data.valueOf("d");
     }
 
-    public String parseForFileData() {
+    private String parseForFileData() {
         OptionParser parser = new OptionParser();
         parser.accepts("f")
                 .withRequiredArg()
@@ -158,7 +156,7 @@ public class HTTPRequest {
             }
         }
         catch (Exception e){
-            System.err.println(e);
+            System.err.println(e.getMessage());
         }
         return data;
     }
@@ -227,13 +225,30 @@ public class HTTPRequest {
 
     //Get Request
     private void GETRequest(String inputURLString) throws MalformedURLException{
-
         URL url = new URL(inputURLString);  //throws malformed url
         String host = url.getHost();
         int  port = url.getDefaultPort();
+        String contentForGet = inputURLString.substring(inputURLString.indexOf(host) + host.length());
 
         try {
             Socket socket = new Socket(host, port);
+            
+
+            // Send headers
+            BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+            wr.write("GET "+ contentForGet +" HTTP/1.0\r\n");
+            wr.write(parseForHeaders());
+            wr.write("\r\n");
+            wr.flush();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String line;
+
+            while ((line = rd.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            wr.close();
+            rd.close();
             socket.close();
         } catch (UnknownHostException e) {
             e.printStackTrace();
