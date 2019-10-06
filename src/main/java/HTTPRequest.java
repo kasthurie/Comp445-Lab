@@ -9,7 +9,6 @@ import java.util.*;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 
@@ -126,7 +125,7 @@ public class HTTPRequest {
         parser.allowsUnrecognizedOptions();
         OptionSet Data = parser.parse(args);
         String data =  (String)Data.valueOf("d");
-        if (data.length() < 0) return "";
+        if (data == null) return "";
         return (data);
     }
 
@@ -140,6 +139,8 @@ public class HTTPRequest {
         String FileName= (String)ResultingFile.valueOf("f");
         String data = "";
 
+        if(FileName != null)
+
         try{
 
             //using the file name, the buffer reader will read the file
@@ -151,7 +152,7 @@ public class HTTPRequest {
             }
         }
         catch (Exception e){
-            System.err.println(e.getMessage());
+           e.printStackTrace();
         }
         return data;
     }
@@ -171,9 +172,7 @@ public class HTTPRequest {
         URL u = new URL(url);
         host = u.getHost();
         port = u.getDefaultPort();
-
-        InetAddress addr = InetAddress.getByName(host);
-        Socket socket = new Socket(addr, port);
+        Socket socket = new Socket(host, port);
 
         String requestHeaders = "";
         for (Map.Entry<String, String> entry : headersMap.entrySet()) {
