@@ -63,7 +63,7 @@ public class HTTPRequest {
             boolean isVerbose =  parseForVerbose();
            Map<String, String> headersMap = parseForHeaders();
            String data = parseForData();
-            POSTRequest(inputURL, isVerbose, headersMap, parseForData());
+            POSTRequest(inputURL, isVerbose, headersMap, parseForData(),parseForFileData());
             //execute command
 
         }
@@ -137,7 +137,7 @@ public class HTTPRequest {
         parser.allowsUnrecognizedOptions();
         OptionSet ResultingFile = parser.parse(args);
         String FileName= (String)ResultingFile.valueOf("f");
-        String data = "";
+        String totalline = "";
 
         if(FileName != null)
 
@@ -148,18 +148,18 @@ public class HTTPRequest {
             BufferedReader bf = new BufferedReader(new FileReader(dFile));
             String line;
             while ((line=bf.readLine())!=null){
-               data += line;
+               totalline += line;
             }
         }
         catch (Exception e){
            e.printStackTrace();
         }
-        return data;
+        return totalline;
     }
 
     //Post Request
 
-    private void POSTRequest(String str, boolean isVerbose,  Map <String, String> headersMap, String data){
+    private void POSTRequest(String str, boolean isVerbose,  Map <String, String> headersMap, String data, String totalline){
 
 
     try {
@@ -185,21 +185,35 @@ public class HTTPRequest {
         if(requestHeaders.length()>0)
             wr.write(requestHeaders);
 
-        if(parseForFileData().equals("") && data.length() < 0) {
-            wr.write("\r\n");
-        }
-
         // Send body, write data or file if they are there
 
         if (!parseForFileData().equals("")){
-            wr.write(parseForFileData());
+
+            if (totalline.length()>0){
+                wr.write("Content-Length:" + totalline.length() + "\r\n");
+                wr.write("\r\n");
+                wr. write(totalline + "\r\n");
+            }
+
+            else {
+                wr.write("\r\n");
+            }
         }
 
-        else if(data.length() > 0){
-            wr.write("Content-Length:" + data.length() + "\r\n");
-             wr.write("\r\n");
-            wr. write(data + "\r\n");
+        else if (!parseForData().equals("")){
+
+            if (data.length() > 0){
+                wr.write("Content-Length:" + data.length() + "\r\n");
+                wr.write("\r\n");
+                wr. write(data + "\r\n");
+            }
+
+            else {
+                wr.write("\r\n");
+            }
         }
+
+
         wr.flush();
 
         BufferedReader rd = new BufferedReader(new InputStreamReader(socket.getInputStream()));
