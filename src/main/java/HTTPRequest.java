@@ -5,15 +5,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.*;
-import java.util.List;
+import java.util.*;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
-
-
 
 
 public class HTTPRequest {
@@ -64,17 +62,20 @@ public class HTTPRequest {
         else if (args[0].equals("post")){
             String inputURL = args[args.length-1];
             boolean isVerbose =  parseForVerbose();
-            POSTRequest(inputURL, isVerbose);
+           Map<String, String> headersMap = parseForHeaders();
+           String data = parseForData();
+            POSTRequest(inputURL, isVerbose, headersMap, parseForData());
             //execute command
 
         }
         else if (args[0].equals("get")){
             String inputURL = args[args.length-1];
             boolean isVerbose =  parseForVerbose();
+            Map<String, String> headersMap = parseForHeaders();
 
 
             if(inputURL.startsWith("https://")|| inputURL.startsWith("http://"))
-            GETRequest(inputURL, isVerbose);
+            GETRequest(inputURL, isVerbose, headersMap);
 
             else
                 throw new MalformedURLException("The Following URL is not valid :" + inputURL);
@@ -87,7 +88,7 @@ public class HTTPRequest {
 
     //Parsing
 
-    private String parseForHeaders(){
+    private Map<String, String> parseForHeaders(){
         OptionParser parser = new OptionParser();
         parser.accepts("h")
                 .withRequiredArg()
@@ -95,15 +96,17 @@ public class HTTPRequest {
         parser.allowsUnrecognizedOptions();
         OptionSet ResultingHeaders = parser.parse(args);
 
-        //get a list of all the headers
+        //get a map of all the headers
         List<String> headerList = (List<String>)ResultingHeaders.valuesOf("h");
+        Map<String, String>  headerMap = new HashMap<String, String>() ;
 
         // Create a string called headers and add all the headers from the list
-        String headers="";
         for(String header: headerList){
-            headers += header.replaceAll(":", ": ") + "\r\n";
+            String key = header.substring(0,header.indexOf(":"));
+            String value = header.substring(header.indexOf(":") + 1);
+            headerMap.put(key,value);
         }
-        return headers;
+        return headerMap;
     }
 
 
@@ -122,7 +125,9 @@ public class HTTPRequest {
                 .ofType(String.class);
         parser.allowsUnrecognizedOptions();
         OptionSet Data = parser.parse(args);
-        return (String)Data.valueOf("d");
+        String data =  (String)Data.valueOf("d");
+        if (data.length() < 0) return "";
+        return (data);
     }
 
     private String parseForFileData() {
@@ -153,7 +158,7 @@ public class HTTPRequest {
 
     //Post Request
 
-    private void POSTRequest(String str, boolean isVerbose){
+    private void POSTRequest(String str, boolean isVerbose,  Map <String, String> headersMap, String data){
 
 
     try {
@@ -170,18 +175,31 @@ public class HTTPRequest {
         InetAddress addr = InetAddress.getByName(host);
         Socket socket = new Socket(addr, port);
 
-        // Send headers
+        String requestHeaders = "";
+        for (Map.Entry<String, String> entry : headersMap.entrySet()) {
+            requestHeaders+= (entry.getKey() + ":" + entry.getValue() +"\r\n");
+        }
+
+        // Send Request
         BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
         wr.write("POST "+ u +" HTTP/1.0\r\n");
-        wr.write(parseForHeaders());
-        wr.write("\r\n");
+        if(requestHeaders.length()>0)
+            wr.write(requestHeaders);
+
+        if(parseForFileData().equals("") && data.length() < 0) {
+            wr.write("\r\n");
+        }
 
         // Send body, write data or file if they are there
+
         if (!parseForFileData().equals("")){
-                wr.write(parseForFileData());
+            wr.write(parseForFileData());
         }
-        else if(!parseForData().equals("")){
-            wr. write(parseForData());
+
+        else if(data.length() > 0){
+            wr.write("Content-Length:" + data.length() + "\r\n");
+             wr.write("\r\n");
+            wr. write(data + "\r\n");
         }
         wr.flush();
 
@@ -195,7 +213,7 @@ public class HTTPRequest {
                 System.out.println(line);
 
             else {
-                line.trim();
+                line = line.trim();
                 if(line.equals("{") || line.equals("}")) {
                     System.out.println(line);
                     isResponse = !isResponse;
@@ -217,22 +235,30 @@ public class HTTPRequest {
 
 
     //Get Request
-    private void GETRequest(String inputURLString, boolean isVerbose) throws MalformedURLException{
+    private void GETRequest(String inputURLString, boolean isVerbose, Map <String, String> headersMap) throws MalformedURLException{
         URL url = new URL(inputURLString);  //throws malformed url
         String host = url.getHost();
         int  port = url.getDefaultPort();
         String contentForGet = inputURLString.substring(inputURLString.indexOf(host) + host.length());
+        String requestHeaders = "";
+        for (Map.Entry<String, String> entry : headersMap.entrySet()) {
+            requestHeaders+= (entry.getKey() + ":" + entry.getValue() +"\r\n");
+        }
 
         try {
             Socket socket = new Socket(host, port);
 
 
-            // Send headers
+            // Send request
             BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
             wr.write("GET "+ contentForGet +" HTTP/1.0\r\n");
-            wr.write(parseForHeaders());
+            //Request headers
+            if(requestHeaders.length()>0)
+            wr.write(requestHeaders);
             wr.write("\r\n");
             wr.flush();
+
+
             BufferedReader rd = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             boolean isResponse = false;
@@ -242,7 +268,7 @@ public class HTTPRequest {
                 System.out.println(line);
 
                 else {
-                    line.trim();
+                    line = line.trim();
                     if(line.equals("{") || line.equals("}")) {
                         System.out.println(line);
                         isResponse = !isResponse;
