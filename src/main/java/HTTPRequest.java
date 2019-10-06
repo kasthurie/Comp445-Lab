@@ -148,7 +148,7 @@ public class HTTPRequest {
             BufferedReader bf = new BufferedReader(new FileReader(dFile));
             String line;
             while ((line=bf.readLine())!=null){
-               totalline += line;
+               totalline += line ;
             }
         }
         catch (Exception e){
