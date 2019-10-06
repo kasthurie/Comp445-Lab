@@ -261,8 +261,16 @@ public class HTTPRequest {
             BufferedReader rd = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             boolean isResponse = false;
+            boolean firstLine = true;
 
             while ((line = rd.readLine()) != null) {
+                if(firstLine) {
+                    firstLine = false;
+                    if (line.matches("HTTP/[0-9].[0-9] 3[0-9]{2} [A-Za-z ]*")) {
+                        System.err.println("Redirection");  //REMOVE LATER AND REPLACE WITH GET METHOD
+                    }
+                }
+
                 if (isVerbose || isResponse)
                 System.out.println(line);
 
